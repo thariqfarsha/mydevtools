@@ -4,7 +4,8 @@ const store = useTabStore();
 const menu = [
   { path: '/json', label: 'JSON Formatter', icon: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 7v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V7m-16 0V5a2 2 0 012-2h8a2 2 0 012 2v2M4 7h16" /></svg>' },
   { path: '/html', label: 'HTML Formatter', icon: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>' },
-  { path: '/diff', label: 'Diff Checker', icon: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7h8m0 0l-4-4m4 4l-4 4m0 6H8m0 0l4 4m-4-4l4-4" /></svg>' }
+  { path: '/sql', label: 'SQL Formatter', icon: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 7v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V7m-16 0V5a2 2 0 012-2h8a2 2 0 012 2v2M4 7h16" /></svg>' },
+  { path: '/diff', label: 'Diff Checker', icon: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7h8m0 0l-4-4m4 4l-4 4m0 6H8m0 0l4 4m-4-4l4-4" /></svg>' },
 ];
 </script>
 
@@ -20,8 +21,8 @@ const menu = [
     >
       <div class="p-4 h-14 border-b border-white/5 flex items-center justify-between overflow-hidden">
         <div class="flex items-center gap-3 min-w-0">
-          <div class="w-8 h-8 min-w-[32px] bg-blue-600 rounded flex items-center justify-center text-white font-bold italic shadow-lg">D</div>
-          <h1 v-show="store.isLocked || store.isHovered" class="font-bold text-white whitespace-nowrap uppercase tracking-tighter text-sm truncate">DevTools Pro</h1>
+          <!-- <div class="w-8 h-8 min-w-8 bg-blue-600 rounded flex items-center justify-center text-white font-bold italic shadow-lg">D</div> -->
+          <h1 v-show="store.isLocked || store.isHovered" class="font-bold text-white whitespace-nowrap uppercase tracking-tighter text-sm truncate">My DevTools</h1>
         </div>
         
         <button 
