@@ -10,8 +10,10 @@ const { editorRef: leftRef, editor: leftEditor, initEditor: initLeft } = useMona
 const { editorRef: rightRef, editor: rightEditor, initEditor: initRight } = useMonaco('json', getTab().output, true);
 
 onMounted(() => {
-  initLeft();
-  initRight();
+  if (leftRef.value && rightRef.value) {
+    initLeft();
+    initRight();
+  }
   leftEditor.value?.onDidChangeModelContent(() => {
     getTab().input = leftEditor.value?.getValue() || '';
   });
