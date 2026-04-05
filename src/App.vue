@@ -46,7 +46,7 @@ const menu = [
           ]"
         >
           <div 
-            class="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-md transition-colors"
+            class="w-8 h-8 shrink-0 flex items-center justify-center rounded-md transition-colors"
             :class="[$route.path === item.path ? 'bg-blue-600 text-white' : 'bg-white/5 group-hover:text-white']"
             v-html="item.icon"
           ></div>

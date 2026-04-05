@@ -1,11 +1,12 @@
 @import "tailwindcss";
 
-/* Pastikan base style untuk layout */
-html, body, #app {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  background-color: #1e1e1e;
-  color: #cbd5e1;
-  overflow: hidden;
+button, 
+.cursor-pointer, 
+[role="button"],
+.nav-link {
+  cursor: pointer !important;
+}
+
+aside, nav, header {
+  user-select: none;
 }
