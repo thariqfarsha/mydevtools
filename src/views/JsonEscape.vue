@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import EditorToolLayout from '../components/EditorToolLayout.vue';
+import Icon from '../components/Icon.vue';
 import { useTabbedEditors } from '../composables/useTabbedEditors';
 
-const { error, run, getOutput, setInput, setOutput } = useTabbedEditors('jsonEscape', 'plaintext');
-
 const wrapQuotes = ref(false);
+const editors = useTabbedEditors('jsonEscape', 'plaintext', () => { editors.run(escapeJson); });
 
 const escapeJson = (raw: string) => {
   const quoted = JSON.stringify(raw);
@@ -24,28 +24,25 @@ const unescapeJson = (raw: string) => {
 };
 
 const swap = () => {
-  setInput(getOutput());
-  setOutput('');
+  editors.setInput(editors.getOutput());
+  editors.setOutput('');
 };
-
-const copyOutput = () => navigator.clipboard?.writeText(getOutput());
 </script>
 
 <template>
-  <EditorToolLayout tool="jsonEscape" :error="error">
-    <template #options>
-      <label class="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer select-none whitespace-nowrap">
-        <input type="checkbox" v-model="wrapQuotes" class="accent-blue-600" />
-        Add surrounding quotes on escape
-      </label>
-    </template>
+  <EditorToolLayout tool="jsonEscape" :editors="editors">
     <template #actions>
-      <button @click="swap" class="btn-ghost" title="Move output to input">⇄ Swap</button>
-      <button @click="copyOutput" class="btn-ghost">Copy</button>
-      <button @click="run(unescapeJson, 'Unescape failed')" class="btn-secondary">Unescape</button>
-      <button @click="run(escapeJson)" class="btn-primary">Escape</button>
+      <button @click="editors.run(unescapeJson, 'Unescape failed')" class="btn-secondary">Unescape</button>
+      <button @click="editors.run(escapeJson)" class="btn-primary">Escape</button>
     </template>
-    <div class="flex-1 border-r border-white/5" ref="input"></div>
-    <div class="flex-1" ref="output"></div>
+    <template #options>
+      <button class="chip !font-sans" :aria-pressed="wrapQuotes" @click="wrapQuotes = !wrapQuotes"
+              title="Wrap the escaped result in double quotes">
+        "…" Surround with quotes
+      </button>
+    </template>
+    <template #output-actions>
+      <button class="btn-icon" title="Use output as input" @click="swap"><Icon name="swap" :size="15" /></button>
+    </template>
   </EditorToolLayout>
 </template>

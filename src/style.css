@@ -1,25 +1,182 @@
 @import "tailwindcss";
 
-button, 
-.cursor-pointer, 
-[role="button"],
-.nav-link {
-  cursor: pointer !important;
+/* `dark:` follows the app theme (data-theme on <html>), not just the OS setting. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/*
+ * Design tokens. System font stacks only: loading web fonts would mean a request
+ * to a third party, which this offline/private app deliberately avoids.
+ */
+@theme {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "SF Mono", ui-monospace, Menlo, Consolas, "Liberation Mono", monospace;
+
+  --color-canvas: #0f0f11;
+  --color-surface: #151518;
+  --color-raised: #1b1b1f;
+  --color-hover: #232328;
+  --color-line: #26262b;
+  --color-line-strong: #34343b;
+  --color-fg: #ececef;
+  --color-muted: #a1a1aa;
+  --color-subtle: #6b6b74;
+  /* Primary: blue-leaning teal. Secondary: orange, for secondary actions and "you are here" markers. */
+  --color-accent: #22bcd0;
+  --color-accent-hover: #4fd1e2;
+  --color-accent-soft: rgb(34 188 208 / 0.13);
+  --color-on-accent: #032a31;
+  --color-highlight: #fb923c;
+  --color-highlight-soft: rgb(251 146 60 / 0.14);
+  --color-danger: #f87171;
+  --color-success: #4ade80;
+  --color-warning: #fbbf24;
+}
+
+/* Light theme: same token names, so every utility (bg-surface, text-muted…) just follows. */
+:root[data-theme="light"] {
+  --color-canvas: #f6f6f7;
+  --color-surface: #ffffff;
+  --color-raised: #f0f0f2;
+  --color-hover: #e7e7ea;
+  --color-line: #e4e4e7;
+  --color-line-strong: #d4d4d8;
+  --color-fg: #18181b;
+  --color-muted: #52525b;
+  --color-subtle: #85858e;
+  --color-accent: #0e7490;
+  --color-accent-hover: #155e75;
+  --color-accent-soft: rgb(14 116 144 / 0.1);
+  --color-on-accent: #ffffff;
+  --color-highlight: #c2410c;
+  --color-highlight-soft: rgb(234 88 12 / 0.1);
+  --color-danger: #dc2626;
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --checker-a: #f4f4f5;
+  --checker-b: #e4e4e7;
+}
+
+:root {
+  --checker-a: #1d1d21;
+  --checker-b: #26262b;
+  color-scheme: dark;
+}
+
+html, body, #app {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-canvas);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+.cursor-pointer,
+[role="button"] {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
 }
 
 aside, nav, header {
   user-select: none;
 }
-/* Shared toolbar controls */
-.btn-primary {
-  @apply bg-blue-600 text-white px-4 py-1 text-xs font-bold rounded cursor-pointer hover:bg-blue-500 shadow-lg transition-colors;
+
+/* In the base layer so utilities like focus-visible:outline-none can opt out. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+  }
 }
-.btn-secondary {
-  @apply bg-orange-600/20 text-orange-400 border border-orange-600/30 px-4 py-1 text-xs font-bold rounded cursor-pointer hover:bg-orange-600/30 transition-colors;
+
+@utility btn {
+  @apply inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-md text-[13px] font-medium whitespace-nowrap transition-colors disabled:opacity-50;
 }
-.btn-ghost {
-  @apply bg-white/5 text-slate-300 border border-white/10 px-3 py-1 text-xs font-bold rounded cursor-pointer hover:bg-white/10 transition-colors;
+
+/* Component classes live in the components layer so utilities (pl-8, h-7…) can override them. */
+@layer components {
+  /* ---------- Buttons ---------- */
+
+  .btn-primary {
+    @apply btn bg-accent text-on-accent hover:bg-accent-hover shadow-[0_1px_0_rgb(255_255_255/0.12)_inset];
+  }
+  .btn-secondary {
+    @apply btn bg-highlight-soft text-highlight border border-highlight/30 hover:bg-highlight/20 hover:border-highlight/50;
+  }
+  .btn-ghost {
+    @apply btn text-muted hover:text-fg hover:bg-hover;
+  }
+  /* Square icon-only button for pane headers and toolbars. */
+  .btn-icon {
+    @apply inline-flex items-center justify-center size-7 rounded-md text-subtle hover:text-fg hover:bg-hover transition-colors;
+  }
+  .btn-icon[aria-pressed="true"] {
+    @apply text-accent bg-accent-soft;
+  }
+
+  /* ---------- Form controls ---------- */
+  .field {
+    @apply h-8 rounded-md border border-line-strong bg-surface px-2.5 text-[13px] text-fg outline-none transition-colors focus:border-accent placeholder:text-subtle;
+  }
+
+  /* Segmented control: wrap buttons with aria-pressed. */
+  .segmented {
+    @apply inline-flex h-8 items-center rounded-md border border-line-strong bg-surface p-0.5;
+  }
+  .segmented > button {
+    @apply h-full px-2.5 rounded-[5px] text-xs font-medium text-muted transition-colors hover:text-fg;
+  }
+  .segmented > button[aria-pressed="true"] {
+    @apply bg-hover text-fg shadow-sm;
+  }
+
+  /* Toggle chip: a button with aria-pressed. */
+  .chip {
+    @apply inline-flex h-8 items-center gap-1.5 rounded-md border border-line-strong bg-surface px-2.5 font-mono text-xs text-muted transition-colors hover:text-fg;
+  }
+  .chip[aria-pressed="true"] {
+    @apply border-accent/60 bg-accent-soft text-fg;
+  }
+
+  .kbd {
+    @apply inline-flex items-center rounded border border-line-strong bg-raised px-1 font-sans text-[10px] leading-4 text-subtle;
+  }
+
+  .label {
+    @apply text-[11px] font-medium uppercase tracking-wider text-subtle;
+  }
+
+  /* Transparency checkerboard for image previews. */
+  .checkerboard {
+    background-color: var(--checker-a);
+    background-image:
+      linear-gradient(45deg, var(--checker-b) 25%, transparent 25%),
+      linear-gradient(-45deg, var(--checker-b) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, var(--checker-b) 75%),
+      linear-gradient(-45deg, transparent 75%, var(--checker-b) 75%);
+    background-size: 16px 16px;
+    background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+  }
 }
-.field {
-  @apply rounded border border-white/10 bg-[#1e1e1e] px-2 py-1 text-xs text-slate-200 outline-none focus:border-blue-500;
+
+/* Native search clear button clashes with the ⌘K badge; Esc clears instead. */
+input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+
+/* Hide number input spinners; the field stays a plain numeric box. */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
 }

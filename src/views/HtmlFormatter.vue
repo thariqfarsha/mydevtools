@@ -3,10 +3,10 @@ import { html as beautifyHtml } from 'js-beautify';
 import EditorToolLayout from '../components/EditorToolLayout.vue';
 import { useTabbedEditors } from '../composables/useTabbedEditors';
 
-const { error, run } = useTabbedEditors('html', 'html');
+const editors = useTabbedEditors('html', 'html', () => { process('format'); });
 
 const process = (mode: 'format' | 'minify') =>
-  run((raw) => mode === 'format'
+  editors.run((raw) => mode === 'format'
     ? beautifyHtml(raw, {
         indent_size: 2,
         wrap_line_length: 0,
@@ -19,12 +19,10 @@ const process = (mode: 'format' | 'minify') =>
 </script>
 
 <template>
-  <EditorToolLayout tool="html" :error="error">
+  <EditorToolLayout tool="html" :editors="editors">
     <template #actions>
       <button @click="process('minify')" class="btn-secondary">Minify</button>
-      <button @click="process('format')" class="btn-primary">Beautify HTML</button>
+      <button @click="process('format')" class="btn-primary">Beautify</button>
     </template>
-    <div class="flex-1 border-r border-white/5" ref="input"></div>
-    <div class="flex-1" ref="output"></div>
   </EditorToolLayout>
 </template>

@@ -1,17 +1,29 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import ToolHeader from '../components/ToolHeader.vue';
+import PaneHeader from '../components/PaneHeader.vue';
+import StatusBar from '../components/StatusBar.vue';
+import Icon from '../components/Icon.vue';
+import { readClipboard } from '../composables/useToast';
 
 type ImageFormat = 'png' | 'jpg';
+
+const MIME: Record<ImageFormat, string> = { png: 'image/png', jpg: 'image/jpeg' };
 
 const input = ref('');
 const format = ref<ImageFormat>('png');
 const previewUrl = ref('');
 const errorMessage = ref('');
+const info = ref<{ width: number; height: number; sourceType: string; bytes: number } | null>(null);
 
 const hasPreview = computed(() => Boolean(previewUrl.value));
-const detectedType = ref('');
 
-const MIME: Record<ImageFormat, string> = { png: 'image/png', jpg: 'image/jpeg' };
+const formatBytes = (bytes: number) =>
+  bytes < 1024 ? `${bytes} B` : bytes < 1024 ** 2 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1024 ** 2).toFixed(2)} MB`;
+
+const previewMeta = computed(() => info.value
+  ? `${info.value.width}×${info.value.height} · ${info.value.sourceType.replace('image/', '').toUpperCase()} · ${formatBytes(info.value.bytes)}`
+  : '');
 
 // Strip data URL prefix, whitespace/newlines, and convert base64url to standard base64.
 const normalizeBase64 = (value: string) => {
@@ -44,25 +56,24 @@ const loadImage = (src: string) => new Promise<HTMLImageElement>((resolve, rejec
   img.src = src;
 });
 
+const reset = (message = '') => {
+  errorMessage.value = message;
+  previewUrl.value = '';
+  info.value = null;
+};
+
 const convert = async () => {
   const cleaned = normalizeBase64(input.value);
 
-  if (!cleaned) {
-    errorMessage.value = 'Please paste a base64 string to preview.';
-    previewUrl.value = '';
-    return;
-  }
+  if (!cleaned) return reset();
 
   if (!/^[A-Za-z0-9+/]+={0,2}$/.test(cleaned) || cleaned.length % 4 !== 0) {
-    errorMessage.value = 'The value does not look like valid base64.';
-    previewUrl.value = '';
-    return;
+    return reset('The value does not look like valid base64.');
   }
 
   try {
-    const sourceMime = sniffMime(cleaned);
-    detectedType.value = sourceMime;
-    const img = await loadImage(`data:${sourceMime};base64,${cleaned}`);
+    const sourceType = sniffMime(cleaned);
+    const img = await loadImage(`data:${sourceType};base64,${cleaned}`);
 
     // Re-encode through a canvas so the output really is the selected format.
     const canvas = document.createElement('canvas');
@@ -77,20 +88,33 @@ const convert = async () => {
     }
     ctx.drawImage(img, 0, 0);
     previewUrl.value = canvas.toDataURL(MIME[format.value], 0.92);
+    info.value = {
+      width: img.naturalWidth,
+      height: img.naturalHeight,
+      sourceType,
+      bytes: Math.floor((cleaned.length * 3) / 4) - (cleaned.match(/=+$/)?.[0].length ?? 0),
+    };
     errorMessage.value = '';
   } catch {
-    errorMessage.value = 'Could not decode this base64 as an image.';
-    previewUrl.value = '';
+    reset('Could not decode this base64 as an image.');
   }
 };
 
-watch(format, () => {
-  if (previewUrl.value) convert();
+// Convert as the user types/pastes (debounced), and whenever the output format changes.
+let timer: ReturnType<typeof setTimeout> | undefined;
+watch(input, () => {
+  clearTimeout(timer);
+  timer = setTimeout(convert, 250);
 });
+watch(format, convert);
+
+const paste = async () => {
+  const text = await readClipboard();
+  if (text !== null) input.value = text;
+};
 
 const downloadImage = () => {
   if (!previewUrl.value) return;
-
   const link = document.createElement('a');
   link.href = previewUrl.value;
   link.download = `converted-image.${format.value}`;
@@ -99,62 +123,50 @@ const downloadImage = () => {
 </script>
 
 <template>
-  <div class="h-full flex flex-col overflow-hidden bg-[#1e1e1e]">
-    <div class="h-12 flex items-center justify-between px-6 bg-[#252526] border-b border-white/5">
-      <div>
-        <h2 class="text-sm font-semibold text-white">Base64 to PNG / JPG</h2>
-        <p class="text-xs text-slate-500">Paste a base64 string and preview the image with a bright background.</p>
-      </div>
-      <div class="flex items-center gap-2">
-        <select v-model="format" class="rounded-md border border-white/10 bg-[#1e1e1e] px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="png">PNG</option>
-          <option value="jpg">JPG</option>
-        </select>
-        <button @click="convert" class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500">
-          Preview
+  <div class="flex h-full flex-col overflow-hidden">
+    <ToolHeader>
+      <template #actions>
+        <div class="segmented" role="group" aria-label="Output format">
+          <button :aria-pressed="format === 'png'" @click="format = 'png'">PNG</button>
+          <button :aria-pressed="format === 'jpg'" @click="format = 'jpg'">JPG</button>
+        </div>
+        <button class="btn-primary" :disabled="!hasPreview" @click="downloadImage">
+          <Icon name="download" :size="14" /> Download {{ format.toUpperCase() }}
         </button>
-      </div>
-    </div>
+      </template>
+    </ToolHeader>
 
-    <div class="flex-1 grid gap-4 overflow-hidden p-4 lg:grid-cols-[1.1fr_0.9fr]">
-      <div class="flex flex-col rounded-xl border border-white/10 bg-[#252526] p-4">
-        <label for="base64-input" class="mb-2 text-sm font-medium text-slate-300">Base64 input</label>
+    <div class="grid min-h-0 flex-1 grid-cols-[1fr_1fr] gap-px bg-line">
+      <section class="flex min-h-0 flex-col bg-surface">
+        <PaneHeader label="Base64" :meta="input ? `${input.length.toLocaleString()} chars` : ''">
+          <button class="btn-icon" title="Paste from clipboard" @click="paste"><Icon name="paste" :size="15" /></button>
+          <button class="btn-icon" title="Clear" @click="input = ''"><Icon name="trash" :size="15" /></button>
+        </PaneHeader>
         <textarea
-          id="base64-input"
           v-model="input"
-          rows="16"
-          class="flex-1 resize-none rounded-lg border border-white/10 bg-[#1e1e1e] p-3 font-mono text-sm text-slate-200 outline-none focus:border-blue-500"
-          placeholder="Paste your base64 string here..."
+          spellcheck="false"
+          aria-label="Base64 input"
+          class="min-h-0 flex-1 resize-none break-all bg-surface px-4 py-3 font-mono text-[13px] leading-5 text-fg outline-none focus-visible:outline-none placeholder:text-subtle"
+          placeholder="Paste a base64 string or a data:image/...;base64, URL"
         />
-      </div>
+      </section>
 
-      <div class="flex flex-col rounded-xl border border-white/10 bg-[#252526] p-4">
-        <div class="mb-3 flex items-center justify-between">
-          <h3 class="text-sm font-semibold text-white">
-            Preview
-            <span v-if="hasPreview && detectedType" class="ml-2 text-xs font-normal text-slate-500">source: {{ detectedType }}</span>
-          </h3>
-          <button
-            v-if="hasPreview"
-            @click="downloadImage"
-            class="rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-slate-200 transition hover:bg-white/10"
-          >
-            Download
-          </button>
-        </div>
-
-        <div class="flex-1 rounded-xl border border-slate-700 bg-white p-4 shadow-inner">
-          <div v-if="errorMessage" class="flex h-full items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-600">
-            {{ errorMessage }}
-          </div>
-          <div v-else-if="hasPreview" class="flex h-full items-center justify-center overflow-hidden rounded-lg bg-white p-2">
-            <img :src="previewUrl" :alt="`Converted ${format}`" class="max-h-full max-w-full object-contain" />
-          </div>
-          <div v-else class="flex h-full items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-600">
-            Your image preview will appear here once you convert the base64 value.
+      <section class="flex min-h-0 flex-col bg-surface">
+        <PaneHeader label="Preview" :meta="previewMeta" />
+        <div class="checkerboard flex min-h-0 flex-1 items-center justify-center overflow-auto p-6">
+          <!-- Tiny images (icons, pixels) are scaled up crisply so they stay visible. -->
+          <img v-if="hasPreview" :src="previewUrl" :alt="`Converted ${format}`"
+               :style="info && Math.max(info.width, info.height) < 128 ? { width: `${info.width * 8}px`, imageRendering: 'pixelated' } : undefined"
+               class="max-h-full max-w-full object-contain shadow-xl shadow-black/15 dark:shadow-black/40" />
+          <div v-else class="flex max-w-xs flex-col items-center gap-3 rounded-xl border border-dashed border-line-strong bg-surface/80 px-6 py-8 text-center">
+            <Icon name="download" :size="22" class="text-subtle" />
+            <p class="text-[13px] text-muted">The image preview appears here as soon as you paste a base64 value.</p>
+            <p class="text-[11px] text-subtle">PNG, JPEG, GIF, WebP, BMP and SVG are detected automatically.</p>
           </div>
         </div>
-      </div>
+      </section>
     </div>
+
+    <StatusBar :error="errorMessage" :hint="hasPreview ? `Converted to ${format.toUpperCase()}` : 'Waiting for input'" />
   </div>
 </template>

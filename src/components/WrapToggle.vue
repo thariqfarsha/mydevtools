@@ -1,10 +1,17 @@
 <script setup lang="ts">
 import { useTabStore } from '../stores/tabStore';
+import Icon from './Icon.vue';
+
 const store = useTabStore();
 </script>
 
 <template>
-  <button @click="store.wrapText = !store.wrapText" class="text-[10px] px-2 py-1 rounded bg-white/5 hover:bg-white/10 cursor-pointer uppercase font-bold transition-colors">
-    Wrap: {{ store.wrapText ? 'ON' : 'OFF' }}
+  <button
+    class="btn-icon"
+    :aria-pressed="store.wrapText"
+    :title="store.wrapText ? 'Word wrap: on' : 'Word wrap: off'"
+    @click="store.wrapText = !store.wrapText"
+  >
+    <Icon name="wrap" />
   </button>
 </template>
