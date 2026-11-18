@@ -6,12 +6,13 @@ export const useTabStore = defineStore('tabStore', () => {
   const isHovered = ref(false);
   const wrapText = ref(true);
   
-  const activeTabId = reactive<Record<string, number>>({ json: 1, html: 2, sql: 3 });
+  const activeTabId = reactive<Record<string, number>>({ json: 1, html: 2, sql: 3, jsonEscape: 4 });
 
   const tabs = reactive<any>({
     json: { 1: { id: 1, title: 'Tab 1', input: '', output: '' } },
     html: { 2: { id: 2, title: 'Tab 1', input: '', output: '' } },
     sql: { 3: { id: 3, title: 'Tab 1', input: '', output: '' } },
+    jsonEscape: { 4: { id: 4, title: 'Tab 1', input: '', output: '' } },
     diff: { original: '', modified: '' }
   });
 
