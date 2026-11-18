@@ -1,10 +1,13 @@
-import { ref, shallowRef, watch, onBeforeUnmount } from 'vue';
+import { shallowRef, watch, onBeforeUnmount, useTemplateRef } from 'vue';
 import * as monaco from 'monaco-editor';
 import { useTabStore } from '../stores/tabStore';
 
-export function useMonaco(language: string, initialValue: string, isReadOnly = false) {
+/**
+ * @param templateKey name of the template ref (`ref="..."`) on the element that hosts the editor.
+ */
+export function useMonaco(templateKey: string, language: string, initialValue: string, isReadOnly = false) {
   const store = useTabStore();
-  const editorRef = ref<HTMLElement | null>(null);
+  const editorRef = useTemplateRef<HTMLElement>(templateKey);
   const editor = shallowRef<monaco.editor.IStandaloneCodeEditor | null>(null);
 
   const initEditor = () => {

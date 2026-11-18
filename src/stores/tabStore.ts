@@ -1,34 +1,59 @@
 import { defineStore } from 'pinia';
 import { reactive, ref } from 'vue';
 
+export type EditorToolId = 'json' | 'jsonEscape' | 'html' | 'sql';
+
+export interface EditorTab {
+  id: number;
+  title: string;
+  input: string;
+  output: string;
+}
+
+const EDITOR_TOOLS: EditorToolId[] = ['json', 'jsonEscape', 'html', 'sql'];
+
 export const useTabStore = defineStore('tabStore', () => {
   const isLocked = ref(true);
   const isHovered = ref(false);
   const wrapText = ref(true);
-  
-  const activeTabId = reactive<Record<string, number>>({ json: 1, html: 2, sql: 3, jsonEscape: 4 });
 
-  const tabs = reactive<any>({
-    json: { 1: { id: 1, title: 'Tab 1', input: '', output: '' } },
-    html: { 2: { id: 2, title: 'Tab 1', input: '', output: '' } },
-    sql: { 3: { id: 3, title: 'Tab 1', input: '', output: '' } },
-    jsonEscape: { 4: { id: 4, title: 'Tab 1', input: '', output: '' } },
-    diff: { original: '', modified: '' }
-  });
+  let nextId = 1;
+  const newTab = (number: number): EditorTab => ({ id: nextId++, title: `Tab ${number}`, input: '', output: '' });
 
-  const addTab = (tool: string) => {
-    const id = Date.now();
-    tabs[tool][id] = { id, title: `Tab ${Object.keys(tabs[tool]).length + 1}`, input: '', output: '' };
-    activeTabId[tool] = id;
+  const tabs = reactive({} as Record<EditorToolId, Record<number, EditorTab>>);
+  const activeTabId = reactive({} as Record<EditorToolId, number>);
+  // Running counter per tool so titles never repeat after a tab is closed.
+  const tabCounter = reactive({} as Record<EditorToolId, number>);
+
+  for (const tool of EDITOR_TOOLS) {
+    const tab = newTab(1);
+    tabs[tool] = { [tab.id]: tab };
+    activeTabId[tool] = tab.id;
+    tabCounter[tool] = 1;
+  }
+
+  const diff = reactive({ original: '', modified: '' });
+
+  const addTab = (tool: EditorToolId) => {
+    tabCounter[tool] += 1;
+    const tab = newTab(tabCounter[tool]);
+    tabs[tool][tab.id] = tab;
+    activeTabId[tool] = tab.id;
   };
 
-  const removeTab = (tool: string, id: number) => {
-    const keys = Object.keys(tabs[tool]);
-    if (keys.length > 1) {
-      delete tabs[tool][id];
-      activeTabId[tool] = Number(Object.keys(tabs[tool])[0]);
+  const removeTab = (tool: EditorToolId, id: number) => {
+    const ids = Object.keys(tabs[tool]).map(Number);
+    if (ids.length <= 1) return;
+
+    const index = ids.indexOf(id);
+    delete tabs[tool][id];
+
+    // Only move the selection when the closed tab was the active one; pick its neighbour.
+    if (activeTabId[tool] === id) {
+      const remaining = ids.filter((tabId) => tabId !== id);
+      activeTabId[tool] = remaining[Math.min(index, remaining.length - 1)];
     }
   };
 
-  return { isLocked, isHovered, wrapText, tabs, activeTabId, addTab, removeTab };
+  return { isLocked, isHovered, wrapText, tabs, activeTabId, diff, addTab, removeTab };
 });

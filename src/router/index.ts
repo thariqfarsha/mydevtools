@@ -1,20 +1,17 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import JsonFormatter from '../views/JsonFormatter.vue';
-import DiffChecker from '../views/DiffChecker.vue';
-import HtmlFormatter from '../views/HtmlFormatter.vue';
-import SqlFormatter from '../views/SqlFormatter.vue';
-import Base64Image from '../views/Base64Image.vue';
-import JsonEscape from '../views/JsonEscape.vue';
+import { tools } from '../tools';
 
-export default createRouter({
+const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/', redirect: '/json' },
-    { path: '/json', component: JsonFormatter },
-    { path: '/html', component: HtmlFormatter },
-    { path: '/sql', component: SqlFormatter },
-    { path: '/json-escape', component: JsonEscape },
-    { path: '/diff', component: DiffChecker },
-    { path: '/base64-image', component: Base64Image },
-  ]
+    { path: '/', redirect: tools[0].path },
+    ...tools.map((tool) => ({ path: tool.path, component: tool.component, meta: { title: tool.label } })),
+    { path: '/:pathMatch(.*)*', redirect: tools[0].path },
+  ],
 });
+
+router.afterEach((to) => {
+  document.title = to.meta.title ? `${to.meta.title} · My DevTools` : 'My DevTools';
+});
+
+export default router;

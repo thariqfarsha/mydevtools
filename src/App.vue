@@ -1,14 +1,8 @@
 <script setup lang="ts">
 import { useTabStore } from './stores/tabStore';
+import { tools } from './tools';
 const store = useTabStore();
-const menu = [
-  { path: '/json', label: 'JSON Formatter', icon: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 7v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V7m-16 0V5a2 2 0 012-2h8a2 2 0 012 2v2M4 7h16" /></svg>' },
-  { path: '/json-escape', label: 'JSON Escape', icon: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 4H6a2 2 0 00-2 2v4l-2 2 2 2v4a2 2 0 002 2h2m8-16h2a2 2 0 012 2v4l2 2-2 2v4a2 2 0 01-2 2h-2M10 9l4 6" /></svg>' },
-  { path: '/html', label: 'HTML Formatter', icon: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>' },
-  { path: '/sql', label: 'SQL Formatter', icon: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 7v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V7m-16 0V5a2 2 0 012-2h8a2 2 0 012 2v2M4 7h16" /></svg>' },
-  { path: '/diff', label: 'Diff Checker', icon: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7h8m0 0l-4-4m4 4l-4 4m0 6H8m0 0l4 4m-4-4l4-4" /></svg>' },
-  { path: '/base64-image', label: 'Base64 to PNG/JPG', icon: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 5h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1zM8 9h8M8 13h5" /></svg>' },
-];
+const menu = tools;
 </script>
 
 <template>
@@ -23,7 +17,6 @@ const menu = [
     >
       <div class="p-4 h-14 border-b border-white/5 flex items-center justify-between overflow-hidden">
         <div class="flex items-center gap-3 min-w-0">
-          <!-- <div class="w-8 h-8 min-w-8 bg-blue-600 rounded flex items-center justify-center text-white font-bold italic shadow-lg">D</div> -->
           <h1 v-show="store.isLocked || store.isHovered" class="font-bold text-white whitespace-nowrap uppercase tracking-tighter text-sm truncate">My DevTools</h1>
         </div>
         
@@ -50,8 +43,9 @@ const menu = [
           <div 
             class="w-8 h-8 shrink-0 flex items-center justify-center rounded-md transition-colors"
             :class="[$route.path === item.path ? 'bg-blue-600 text-white' : 'bg-white/5 group-hover:text-white']"
-            v-html="item.icon"
-          ></div>
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" v-html="item.icon"></svg>
+          </div>
           <span v-show="store.isLocked || store.isHovered" class="whitespace-nowrap text-sm font-medium">{{ item.label }}</span>
         </router-link>
       </nav>

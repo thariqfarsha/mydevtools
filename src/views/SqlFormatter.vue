@@ -1,73 +1,24 @@
 <script setup lang="ts">
-import { onMounted, watch } from 'vue';
 import { format as formatSql } from 'sql-formatter';
-import { useTabStore } from '../stores/tabStore';
-import { useMonaco } from '../composables/useMonaco';
+import EditorToolLayout from '../components/EditorToolLayout.vue';
+import { useTabbedEditors } from '../composables/useTabbedEditors';
 
-const store = useTabStore();
-const getTab = () => store.tabs.sql[store.activeTabId.sql];
+const { error, run } = useTabbedEditors('sql', 'sql');
 
-const { editorRef: leftRef, editor: leftEditor, initEditor: initLeft } = useMonaco('sql', getTab().input);
-const { editorRef: rightRef, editor: rightEditor, initEditor: initRight } = useMonaco('sql', getTab().output, true);
-
-onMounted(() => {
-  if (leftRef.value && rightRef.value) {
-    initLeft();
-    initRight();
-  }
-  leftEditor.value?.onDidChangeModelContent(() => {
-    getTab().input = leftEditor.value?.getValue() || '';
-  });
-});
-
-watch(() => store.activeTabId.sql, () => {
-  leftEditor.value?.setValue(getTab().input);
-  rightEditor.value?.setValue(getTab().output);
-});
-
-const process = (mode: 'format' | 'minify') => {
-  const raw = leftEditor.value?.getValue() || '';
-  try {
-    let res = '';
-    if (mode === 'format') {
-      res = formatSql(raw, { language: 'postgresql', keywordCase: 'upper' });
-    } else {
-      res = raw.replace(/\s+/g, ' ').replace(/\s?([\(\),;])\s?/g, '$1').trim();
-    }
-    rightEditor.value?.setValue(res);
-    getTab().output = res;
-  } catch (e) { alert('SQL Error'); }
-};
+const process = (mode: 'format' | 'minify') =>
+  run((raw) => mode === 'format'
+    ? formatSql(raw, { language: 'postgresql', keywordCase: 'upper' })
+    : raw.replace(/\s+/g, ' ').replace(/\s?([\(\),;])\s?/g, '$1').trim(),
+  'SQL error');
 </script>
 
 <template>
-  <div class="h-full flex flex-col overflow-hidden">
-    <div class="flex bg-[#252526] border-b border-white/5">
-      <div v-for="tab in store.tabs.sql" :key="tab.id" 
-           @click="store.activeTabId.sql = tab.id"
-           :class="[store.activeTabId.sql === tab.id ? 'bg-[#1e1e1e] border-t-2 border-blue-600 text-white' : 'text-slate-500 hover:bg-white/5']"
-           class="px-4 py-2 cursor-pointer text-xs border-r border-white/5 flex items-center gap-2 select-none group">
-        {{ tab.title }}
-        <span @click.stop="store.removeTab('sql', tab.id)" class="opacity-0 group-hover:opacity-100 hover:text-red-500 transition-opacity">×</span>
-      </div>
-      <button @click="store.addTab('sql')" class="px-3 text-slate-500 hover:text-white cursor-pointer">+</button>
-    </div>
-
-    <div class="h-12 flex items-center justify-between px-6 bg-[#1e1e1e] border-b border-white/5 font-sans">
-      <div class="flex items-center gap-4">
-        <button @click="store.wrapText = !store.wrapText" class="text-[10px] px-2 py-1 rounded bg-white/5 hover:bg-white/10 cursor-pointer uppercase font-bold transition-colors">
-          Wrap: {{ store.wrapText ? 'ON' : 'OFF' }}
-        </button>
-      </div>
-      <div class="flex gap-2">
-        <button @click="process('minify')" class="bg-orange-600/20 text-orange-400 border border-orange-600/30 px-4 py-1 text-xs font-bold rounded cursor-pointer hover:bg-orange-600/30">Minify</button>
-        <button @click="process('format')" class="bg-blue-600 text-white px-4 py-1 text-xs font-bold rounded cursor-pointer hover:bg-blue-500 shadow-lg">Format SQL</button>
-      </div>
-    </div>
-
-    <div class="flex-1 flex overflow-hidden">
-      <div class="flex-1 border-r border-white/5" ref="leftRef"></div>
-      <div class="flex-1" ref="rightRef"></div>
-    </div>
-  </div>
+  <EditorToolLayout tool="sql" :error="error">
+    <template #actions>
+      <button @click="process('minify')" class="btn-secondary">Minify</button>
+      <button @click="process('format')" class="btn-primary">Format SQL</button>
+    </template>
+    <div class="flex-1 border-r border-white/5" ref="input"></div>
+    <div class="flex-1" ref="output"></div>
+  </EditorToolLayout>
 </template>
