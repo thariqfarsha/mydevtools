@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { reactive, ref } from 'vue';
 
-export type EditorToolId = 'json' | 'jsonEscape' | 'html' | 'sql' | 'encode';
+export type EditorToolId = 'json' | 'jsonEscape' | 'html' | 'sql' | 'xml' | 'css' | 'js' | 'convert' | 'encode';
 
 export interface EditorTab {
   id: number;
@@ -10,7 +10,7 @@ export interface EditorTab {
   output: string;
 }
 
-const EDITOR_TOOLS: EditorToolId[] = ['json', 'jsonEscape', 'html', 'sql', 'encode'];
+const EDITOR_TOOLS: EditorToolId[] = ['json', 'jsonEscape', 'html', 'sql', 'xml', 'css', 'js', 'convert', 'encode'];
 
 export const useTabStore = defineStore('tabStore', () => {
   const isLocked = ref(true);

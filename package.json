@@ -10,17 +10,22 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.2",
+    "cronstrue": "^3.43.0",
     "js-beautify": "^1.15.4",
     "monaco-editor": "^0.55.1",
+    "papaparse": "^5.7.1",
     "pinia": "^3.0.4",
     "sql-formatter": "^15.7.3",
     "tailwindcss": "^4.2.2",
+    "terser": "^5.51.2",
     "vue": "^3.5.30",
-    "vue-router": "^4.6.4"
+    "vue-router": "^4.6.4",
+    "yaml": "^2.9.1"
   },
   "devDependencies": {
     "@types/js-beautify": "^1.14.3",
     "@types/node": "^24.12.0",
+    "@types/papaparse": "^5.5.2",
     "@vitejs/plugin-vue": "^6.0.5",
     "@vue/tsconfig": "^0.9.0",
     "typescript": "~5.9.3",

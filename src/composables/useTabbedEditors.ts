@@ -87,6 +87,14 @@ export function useTabbedEditors(tool: EditorToolId, language: string, onSubmit?
 
   const copyOutput = () => copyText(getOutput());
 
+  /** Switch syntax highlighting, e.g. when a converter changes its input or output format. */
+  const setLanguages = (inputLanguage: string, outputLanguage = inputLanguage) => {
+    const inModel = input.editor.value?.getModel();
+    const outModel = output.editor.value?.getModel();
+    if (inModel) monaco.editor.setModelLanguage(inModel, inputLanguage);
+    if (outModel) monaco.editor.setModelLanguage(outModel, outputLanguage);
+  };
+
   return {
     bindInput: input.bindEl,
     bindOutput: output.bindEl,
@@ -100,6 +108,7 @@ export function useTabbedEditors(tool: EditorToolId, language: string, onSubmit?
     pasteInput,
     clearAll,
     copyOutput,
+    setLanguages,
   };
 }
 
