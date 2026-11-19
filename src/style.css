@@ -145,6 +145,10 @@ aside, nav, header {
     @apply border-accent/60 bg-accent-soft text-fg;
   }
 
+  .card {
+    @apply rounded-lg border border-line bg-surface;
+  }
+
   .kbd {
     @apply inline-flex items-center rounded border border-line-strong bg-raised px-1 font-sans text-[10px] leading-4 text-subtle;
   }
